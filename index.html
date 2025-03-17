@@ -65,24 +65,17 @@
             text-align: center;
             top: 20px;
         }
-        .logox {
-            position: absolute;
-            text-align: center;
-            top: 20px;
-            left:  -20px;
-            width: 50px;
-            height: 50px;
-        }
+
         .logo {
             position: fixed;
             top: 5px;
             left: 5px;
             width: 100px;
             height: 100px;
-            z-index: 100;
+            z-index: -1;
         }
         .title {
-            font-size: 24px;
+            font-size: 20px;
             margin-bottom: 10px;
         }
         .grid {
@@ -164,7 +157,7 @@
     }
 
     .line-top {
-    top: 90px; /* Adjust based on your layout */
+    top: 5px; /* Adjust based on your layout */
     }
 
     .line-bottom {
@@ -219,6 +212,7 @@
 
     .bin-content {
         z-index: 1;
+        transition: opacity 0.4s ease;
     }
 
     .bin-lid {
@@ -357,8 +351,8 @@
             <div class="progress-text">54%</div>
         </div>
         <div class="progress-bar">
-            <div class="progress-fill" style="width: 90%"></div>
-            <div class="progress-text">90%</div>
+            <div class="progress-fill" style="width: 98%"></div>
+            <div class="progress-text">98%</div>
         </div>
     </div>
 
@@ -373,6 +367,8 @@
     let selectedDigits = [];
     const targetDate = "03172000"; // The specific date we're looking for
 
+    const completeSound = new Audio('macrodata-done.mp3');
+    
     function createGrid() {
         grid.innerHTML = ''; // Clear existing grid
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -422,6 +418,7 @@
     }
 
     // Update a specific progress bar
+    // Update the updateProgressBar function:
     function updateProgressBar(index) {
         const progressBars = document.querySelectorAll('.progress-bar');
         const selectedBar = progressBars[index];
@@ -443,12 +440,39 @@
         progressFill.style.width = newPercentage + '%';
         progressText.textContent = newPercentage + '%';
         
-        // Highlight the updated progress bar temporarily
-        selectedBar.style.borderColor = '#5DE4C7';
-        setTimeout(() => {
-            selectedBar.style.borderColor = '#24e4f2';
-        }, 1000);
+        // Check if we've reached 100%
+        //if (newPercentage === 100 && currentPercentage < 100) {
+        if (newPercentage === 100 ) {
+        
+            // Play the completion sound
+            completeSound.currentTime = 0; // Reset to start of audio
+            completeSound.play();
+            
+            // Add extra visual feedback for completion
+            selectedBar.style.borderColor = '#5DE4C7';
+            progressFill.style.backgroundColor = 'rgba(93, 228, 199, 0.5)';
+            
+            // Flash effect
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                if (flashCount > 5) {
+                    clearInterval(flashInterval);
+                    selectedBar.style.borderColor = '#24e4f2';
+                    return;
+                }
+                
+                selectedBar.style.borderColor = flashCount % 2 === 0 ? '#5DE4C7' : '#24e4f2';
+                flashCount++;
+            }, 200);
+        } else {
+            // Regular highlight for non-100% updates
+            selectedBar.style.borderColor = '#5DE4C7';
+            setTimeout(() => {
+                selectedBar.style.borderColor = '#24e4f2';
+            }, 1000);
+        }
     }
+
 
 
     
@@ -637,6 +661,10 @@ function animateDigitsToBin() {
     
     // After a brief pause, start moving digits one by one
     setTimeout(() => {
+        // Hide bin content
+        const binContent = selectedBin.querySelector('.bin-content');
+        binContent.style.opacity = '0';
+
         // Open the bin lids before digits arrive
         leftLid.classList.add('open');
         rightLid.classList.add('open');
@@ -676,6 +704,13 @@ function animateDigitsToBin() {
             // Close the bin lids
             leftLid.classList.remove('open');
             rightLid.classList.remove('open');
+
+            // Show bin content after lids close
+            setTimeout(() => {
+                const binContent = selectedBin.querySelector('.bin-content');
+                binContent.style.opacity = '1';
+            }, 400); // Wait for lids to close
+            
             
             // Update the specific progress bar for this bin
             updateProgressBar(randomBinIndex);
