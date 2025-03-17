@@ -367,8 +367,43 @@
     let selectedDigits = [];
     const targetDate = "03172000"; // The specific date we're looking for
 
-    const completeSound = new Audio('macrodata-done.mp3');
-    
+    let completeSound;
+    let audioInitialized = false;
+
+    // Function to initialize audio (must be called from a user interaction handler)
+    function initializeAudio() {
+        if (audioInitialized) return;
+        
+        completeSound = new Audio('macrodata-done.mp3');
+        
+        // iOS workaround - load and play a silent sound first
+        document.addEventListener('touchstart', function() {
+            if (!audioInitialized) {
+                const silentSound = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjM1LjEwNAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAABAAADQgD///////////////////////////////////////////////8AAAA5TEFNRTMuMTAwAc0AAAAAAAAAABSAJAi4QgAAQAAAA0Lp99vKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tQxAADwAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV');
+                silentSound.play().catch(e => console.log("Silent audio init failed, but that's OK"));
+                audioInitialized = true;
+            }
+        }, {once: true});
+    }
+
+    function playCompleteSound() {
+        if (!completeSound) return;
+        
+        // Create a promise to track playback attempt
+        const playPromise = completeSound.play();
+        
+        // Handle playback errors
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.log("Audio playback failed: ", error);
+                // On iOS, sometimes this helps:
+                setTimeout(() => {
+                    completeSound.play().catch(e => console.log("Retry failed"));
+                }, 100);
+            });
+        }
+    }
+
     function createGrid() {
         grid.innerHTML = ''; // Clear existing grid
         for (let i = 0; i < gridSize * gridSize; i++) {
@@ -394,6 +429,9 @@
     }
 
     function handleCellClick() {
+        // Initialize audio on first click
+        initializeAudio();
+
         if (isAnimating) return;
         
         // Stop the random highlighting
@@ -445,8 +483,9 @@
         if (newPercentage === 100 ) {
         
             // Play the completion sound
-            completeSound.currentTime = 0; // Reset to start of audio
-            completeSound.play();
+            completeSound && (completeSound.currentTime = 0); // Reset to start of audio
+            playCompleteSound();
+
             
             // Add extra visual feedback for completion
             selectedBar.style.borderColor = '#5DE4C7';
