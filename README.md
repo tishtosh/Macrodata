@@ -1,9 +1,9 @@
 # Macrodata
 MACRODATA REFINEMENT EMULATOR
+Birthday greeting for a Severance fan.
 
 Created March 2024 by tishtosh
 
-Birthday greeting for a Severance fan.
 1) Name of Birthday receipient at top of page
 2) Click on the number grid.
 3) Digits fly to highlight the recipient birthday.
