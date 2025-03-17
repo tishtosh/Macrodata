@@ -115,7 +115,7 @@
         }
         .highlight {
             color: #24e4f2;
-            font-size: 22px;
+            font-size: 21px;
             transform: scale(1.2);
             animation: wobbles 0.8s ease-in-out ;
         }
@@ -382,6 +382,21 @@
     let completeSound;
     let audioInitialized = false;
 
+    // Update your initialization code to alternate between random and circular highlights
+    // Replace the existing highlightInterval setup with this:
+    let highlightMode = 'random';
+    /*
+    highlightInterval = setInterval(() => {
+        if (highlightMode === 'random') {
+            highlightRandomCells();
+            highlightMode = 'circular';
+        } else {
+            highlightCircularPattern();
+            highlightMode = 'random';
+        }
+    }, 2000); // Slightly longer interval for the more complex pattern
+    */
+
     // Function to initialize audio (must be called from a user interaction handler)
     function initializeAudio() {
         if (audioInitialized) return;
@@ -428,17 +443,85 @@
     }
 
     function highlightRandomCells() {
+            if (isAnimating) return;
+            
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => cell.classList.remove('highlight')); // Reset highlights
+
+            let highlightCount = Math.floor(Math.random() * 5) + 2; // Highlight 2-5 numbers
+            for (let i = 0; i < highlightCount; i++) {
+                let randomIndex = Math.floor(Math.random() * cells.length);
+                cells[randomIndex].classList.add('highlight');
+            }
+        }
+
+    function highlightCircularPattern() {
         if (isAnimating) return;
         
+        // Clear existing highlights
         const cells = document.querySelectorAll('.cell');
-        cells.forEach(cell => cell.classList.remove('highlight')); // Reset highlights
-
-        let highlightCount = Math.floor(Math.random() * 5) + 2; // Highlight 2-5 numbers
-        for (let i = 0; i < highlightCount; i++) {
-            let randomIndex = Math.floor(Math.random() * cells.length);
-            cells[randomIndex].classList.add('highlight');
-        }
+        cells.forEach(cell => {
+            cell.classList.remove('highlight');
+            cell.style.color = '';
+            cell.style.textShadow = '';
+        });
+        
+        // Get grid dimensions
+        const gridWidth = 10; // Since we have a 10x10 grid
+        
+        // Pick a random center cell
+        const centerIndex = Math.floor(Math.random() * cells.length);
+        const centerRow = Math.floor(centerIndex / gridWidth);
+        const centerCol = centerIndex % gridWidth;
+        
+        // Maximum radius of effect
+        const maxRadius = 4;
+        
+        // Highlight cells in a circular pattern
+        cells.forEach((cell, index) => {
+            const row = Math.floor(index / gridWidth);
+            const col = index % gridWidth;
+            
+            // Calculate distance from center (using square distance for simplicity)
+            const distance = Math.sqrt(Math.pow(row - centerRow, 2) + Math.pow(col - centerCol, 2));
+            
+            // Apply highlight based on distance
+            if (distance <= maxRadius) {
+                // Apply different effects based on distance from center
+                const intensity = 1 - (distance / maxRadius);
+                
+                if (distance < 0.8) {
+                    // Center cell
+                    cell.classList.add('highlight');
+                    cell.style.color = '#5DE4C7';
+                } else {
+                    // Calculate color based on distance
+                    const r = Math.floor(36 + (93 - 36) * intensity);
+                    const g = Math.floor(228 - (228 - 74) * intensity);
+                    const b = Math.floor(242 - (242 - 79) * intensity);
+                    
+                    cell.style.color = `rgb(${r}, ${g}, ${b})`;
+                    cell.style.textShadow = `0 0 ${intensity * 5}px #24e4f2`;
+                    
+                    // Add subtle scale effect
+                    cell.style.transform = `scale(${1 + intensity * 0.3})`;
+                    cell.style.zIndex = Math.floor(intensity * 10);
+                }
+                
+                // Add staggered animation delay based on distance
+                const delay = distance * 50; // ms
+                setTimeout(() => {
+                    // Apply a small wobble animation
+                    cell.style.animation = 'wobbles 0.8s ease-in-out';
+                    // Remove animation after it completes
+                    setTimeout(() => {
+                        cell.style.animation = '';
+                    }, 800);
+                }, delay);
+            }
+        });
     }
+
 
     function handleCellClick() {
         // Initialize audio on first click
