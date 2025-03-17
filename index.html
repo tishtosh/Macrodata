@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macrodata Refinement</title>
+    <style>
+        body {
+            background-color: black;
+            color:  #24e4f2; 
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        .container {
+            position: absolute;
+            text-align: center;
+            top: 20px;
+        }
+        .logox {
+            position: absolute;
+            text-align: center;
+            top: 20px;
+            left:  -20px;
+            width: 50px;
+            height: 50px;
+        }
+        .logo {
+            position: fixed;
+            top: 5px;
+            left: 5px;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+        }
+        .title {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-gap: 5px;
+            border: 2px solid #24e4f2;
+            padding: 10px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            transition: all 0.5s ease-in-out;
+        }
+        @keyframes wobbles {
+        0% { transform: rotate(0deg)   }
+        25% { transform: rotate(-5deg)   }
+        50% { transform: rotate(0deg) scale(1.1) }
+        75% { transform: rotate(5deg)   }
+        100% { transform: rotate(0deg)  }
+        }
+        .highlight {
+            color: #24e4f2;
+            font-size: 20px;
+            transform: scale(1.2);
+            animation: wobbles 0.8s ease-in-out ;
+        }
+        .result-box {
+        border: none;
+        height: 40px;
+        margin: 20px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        width: 180px;
+        }
+        .cell:hover {
+            color: #5DE4C7;
+            font-size: 22px;
+            transform: scale(1.3);
+            animation: wobbles 1s ease-in-out infinite;
+            z-index: 10;
+        }
+    .digit {
+        color: #24e4f2;;
+        margin: 0 2px;
+        position: relative;
+    }
+    @keyframes wobble {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(5deg); }
+    100% { transform: rotate(0deg); }
+    }
+    .flying-digit {
+    position: absolute;
+    color: #24e4f2;
+    z-index: 10;
+    transition: all 1.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    animation: wobble 0.6s ease-in-out infinite;
+    }
+
+    .cell {
+        cursor: pointer;
+    }
+    .horizontal-line {
+    height: 2px;
+    background-color: #24e4f2;
+    width: 100vw;
+    position: fixed;
+    left: 0;
+    z-index: 5;
+    }
+
+    .line-top {
+    top: 90px; /* Adjust based on your layout */
+    }
+
+    .line-bottom {
+    bottom: 10px; /* Adjust based on your layout */
+    }
+    .bin-rectangle {
+    width: 80px;
+    height: 25px;
+    border: 2px solid #24e4f2;
+    color: #24e4f2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    }
+
+    .bin-rectangle:hover {
+    color: #5DE4C7;
+    border-color: #5DE4C7;
+    transform: scale(1.05);
+    }
+
+    .bins-container {
+    position: fixed;
+    bottom: 65px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 5;
+    }
+
+    .bin-rectangle {
+    width: 80px;
+    height: 25px;
+    border: 2px solid #24e4f2;
+    color: #24e4f2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: visible; /* Allow lids to extend outside */
+    }
+
+    .bin-content {
+        z-index: 1;
+    }
+
+    .bin-lid {
+        position: absolute;
+        top: 0;
+        height: 2px;
+        background-color: #24e4f2;
+        transition: all 0.4s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+        z-index: 2;
+    }
+
+    .bin-lid.left {
+        left: 0;
+        width: 50%;
+        transform-origin: left center;
+    }
+
+    .bin-lid.right {
+        right: 0;
+        width: 50%;
+        transform-origin: right center;
+    }
+
+    .bin-lid.left.open {
+        transform: rotate(-45deg);
+    }
+
+    .bin-lid.right.open {
+        transform: rotate(45deg);
+    }
+
+    .progress-container {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 5;
+    }
+
+    .progress-bar {
+    width: 80px;
+    height: 25px;
+    border: 2px solid #24e4f2;
+    position: relative;
+    overflow: hidden;
+    }
+
+    .progress-fill {
+    background-color: rgba(36, 228, 242, 0.3);
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: width 1s ease;
+    }
+
+    .progress-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    line-height: 25px;
+    color: #24e4f2;
+    font-weight: bold;
+    z-index: 1;
+    }
+
+    </style>
+</head>
+<body>
+    <!-- Add these lines to the body, outside other containers -->
+    <div class="horizontal-line line-top"></div>
+    
+    <div class="container">
+        <!-- Lumon logo in top left -->
+        <div class="logo">
+            <image src="lumon.svg" alt="Lumon logo" width="150px">
+        </div>
+
+    </div>
+
+    <!-- Main content centered in the middle -->
+    <div class="container">
+        <div class="title">MACRODATA REFINEMENT</div>
+        <div class="title">ELIZABETH R</div>
+        <div class="grid" id="grid"></div>
+        <div id="result-box" class="result-box"></div>
+    </div>
+
+    <div class="bins-container">
+        <div class="bin-rectangle">
+            <div class="bin-lid left"></div>
+            <div class="bin-lid right"></div>
+            <div class="bin-content">01</div>
+        </div>
+        <div class="bin-rectangle">
+            <div class="bin-lid left"></div>
+            <div class="bin-lid right"></div>
+            <div class="bin-content">02</div>
+        </div>
+        <div class="bin-rectangle">
+            <div class="bin-lid left"></div>
+            <div class="bin-lid right"></div>
+            <div class="bin-content">03</div>
+        </div>
+        <div class="bin-rectangle">
+            <div class="bin-lid left"></div>
+            <div class="bin-lid right"></div>
+            <div class="bin-content">04</div>
+        </div>
+        <div class="bin-rectangle">
+            <div class="bin-lid left"></div>
+            <div class="bin-lid right"></div>
+            <div class="bin-content">05</div>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 35%"></div>
+            <div class="progress-text">35%</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 72%"></div>
+            <div class="progress-text">72%</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 18%"></div>
+            <div class="progress-text">18%</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 54%"></div>
+            <div class="progress-text">54%</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: 90%"></div>
+            <div class="progress-text">90%</div>
+        </div>
+    </div>
+
+    <div class="horizontal-line line-bottom"></div>
+
+<script>
+    const gridSize = 10;
+    const grid = document.getElementById('grid');
+    const resultBox = document.getElementById('result-box');
+    let highlightInterval;
+    let isAnimating = false;
+    let selectedDigits = [];
+    const targetDate = "03172000"; // The specific date we're looking for
+
+    function createGrid() {
+        grid.innerHTML = ''; // Clear existing grid
+        for (let i = 0; i < gridSize * gridSize; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.textContent = Math.floor(Math.random() * 10); // Random number 0-9
+            cell.addEventListener('click', handleCellClick); // Add click handler
+            grid.appendChild(cell);
+        }
+    }
+
+    function highlightRandomCells() {
+        if (isAnimating) return;
+        
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => cell.classList.remove('highlight')); // Reset highlights
+
+        let highlightCount = Math.floor(Math.random() * 5) + 2; // Highlight 2-5 numbers
+        for (let i = 0; i < highlightCount; i++) {
+            let randomIndex = Math.floor(Math.random() * cells.length);
+            cells[randomIndex].classList.add('highlight');
+        }
+    }
+
+    function handleCellClick() {
+        if (isAnimating) return;
+        
+        // Stop the random highlighting
+        clearInterval(highlightInterval);
+        isAnimating = true;
+        
+        // Reset highlights and selected digits
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => cell.classList.remove('highlight'));
+        selectedDigits = [];
+        resultBox.innerHTML = '';
+
+  
+        
+        // Find cells that match our target date pattern
+        findDateDigits();
+        
+        // After a pause, animate the digits to result box
+        setTimeout(() => {
+            animateDigitsToResult();
+        }, 1000);
+    }
+
+    // Update a specific progress bar
+    function updateProgressBar(index) {
+        const progressBars = document.querySelectorAll('.progress-bar');
+        const selectedBar = progressBars[index];
+        
+        // Get the current progress fill and text elements
+        const progressFill = selectedBar.querySelector('.progress-fill');
+        const progressText = selectedBar.querySelector('.progress-text');
+        
+        // Get current percentage from width style
+        let currentPercentage = parseInt(progressFill.style.width) || 0;
+        
+        // Generate random increase amount (1-5%)
+        const increase = Math.floor(Math.random() * 5) + 1;
+        
+        // Calculate new percentage, capped at 100%
+        const newPercentage = Math.min(currentPercentage + increase, 100);
+        
+        // Update both the fill width and the text
+        progressFill.style.width = newPercentage + '%';
+        progressText.textContent = newPercentage + '%';
+        
+        // Highlight the updated progress bar temporarily
+        selectedBar.style.borderColor = '#5DE4C7';
+        setTimeout(() => {
+            selectedBar.style.borderColor = '#24e4f2';
+        }, 1000);
+    }
+
+
+    
+    
+    function findDateDigits() {
+        const cells = Array.from(document.querySelectorAll('.cell'));
+        const targetDigits = targetDate.split('');
+        
+        // For each digit in our target date
+        for (let digit of targetDigits) {
+            // Find matching cells that haven't been selected yet
+            const matchingCells = cells.filter(cell => 
+                !selectedDigits.includes(cell) && 
+                cell.textContent === digit
+            );
+            
+            if (matchingCells.length > 0) {
+                // Select a random matching cell
+                const randomIndex = Math.floor(Math.random() * matchingCells.length);
+                const selectedCell = matchingCells[randomIndex];
+                
+                // Highlight and track the cell
+                selectedCell.classList.add('highlight');
+                selectedDigits.push(selectedCell);
+            }
+        }
+    }
+    
+    
+    /* filepath: /Users/chayman/Library/Mobile Documents/com~apple~CloudDocs/Personal Projects Craig 2/Macrodata/indexlumon.html */
+function animateDigitsToResult() {
+    // Create positioned flying digits
+    const flyingDigits = [];
+    
+    for (let i = 0; i < selectedDigits.length; i++) {
+        const cell = selectedDigits[i];
+        const cellRect = cell.getBoundingClientRect();
+        
+        // Create flying digit element
+        const flyingDigit = document.createElement('div');
+        flyingDigit.className = 'flying-digit';
+        flyingDigit.textContent = cell.textContent;
+        flyingDigit.style.fontSize = '26px';
+        // Add slight stagger to animation timing
+        flyingDigit.style.animationDelay = (i * 0.1) + 's';
+        flyingDigit.style.left = cellRect.left + 'px';
+        flyingDigit.style.top = cellRect.top + 'px';
+        document.body.appendChild(flyingDigit);
+        flyingDigits.push(flyingDigit);
+        
+        // Hide original cell
+        cell.style.visibility = 'hidden';
+    }
+    
+    // After a brief pause, start the animation
+    setTimeout(() => {
+        const resultRect = resultBox.getBoundingClientRect();
+        const center = resultRect.left + (resultRect.width / 2) - (selectedDigits.length * 10);
+        
+        // Position the digits in the result box with staggered timing
+        for (let i = 0; i < flyingDigits.length; i++) {
+            const digit = flyingDigits[i];
+            
+            // Format as "03 17 2000"
+            let xOffset = 0;
+            if (i >= 2) xOffset += 10; // Add space after 03
+            if (i >= 4) xOffset += 10; // Add space after 17
+            
+            // Add a slight delay to each digit for a cascading effect
+            setTimeout(() => {
+                digit.style.left = (center + (i * 20) + xOffset) + 'px';
+                digit.style.top = (resultRect.top + (resultRect.height / 2) - 13) + 'px';
+            }, i * 50);
+        }
+        
+        // After animation completes
+        setTimeout(() => {
+            // Prepare formatted date for smooth transition
+            let formattedDate = '';
+            for (let i = 0; i < targetDate.length; i++) {
+                formattedDate += targetDate[i];
+                if (i === 1 || i === 3) formattedDate += ' ';
+            }
+
+            // Create spans for each digit to fade in
+            resultBox.innerHTML = '';
+            const formattedDigits = formattedDate.split('');
+            
+            // Fade in each digit with staggered timing
+            formattedDigits.forEach((char, i) => {
+                const span = document.createElement('span');
+                span.textContent = char;
+                span.className = 'digit';
+                span.style.opacity = '0';
+                span.style.transform = 'scale(1.2)';
+                span.style.transition = 'all 0.3s ease';
+                resultBox.appendChild(span);
+                
+                // Stagger the fade-in
+                setTimeout(() => {
+                    span.style.opacity = '1';
+                    span.style.transform = 'scale(1)';
+                }, 100 + (i * 40));
+            });
+            
+            // Hide flying digits with a fade out
+            flyingDigits.forEach((digit, i) => {
+                setTimeout(() => {
+                    digit.style.opacity = '0';
+                    setTimeout(() => digit.remove(), 300);
+                }, i * 30);
+            });
+            
+            // Begin second animation - to bin with a smoother transition
+            setTimeout(() => {
+                // Add a subtle pulse effect before animating to bin
+                const digits = resultBox.querySelectorAll('.digit');
+                digits.forEach(digit => {
+                    digit.style.transition = 'all 0.5s ease';
+                    digit.style.color = '#5DE4C7';
+                    setTimeout(() => {
+                        digit.style.color = '#24e4f2';
+                    }, 300);
+                });
+                
+                setTimeout(() => {
+                    animateDigitsToBin();
+                }, 600);
+            }, 1500);
+            
+        }, 1000); // Time for flying animation
+    }, 200);
+}
+
+ /* filepath: /Users/chayman/Library/Mobile Documents/com~apple~CloudDocs/Personal Projects Craig 2/Macrodata/index.html */
+function animateDigitsToBin() {
+    // Get the result box position
+    const resultRect = resultBox.getBoundingClientRect();
+    const resultDigits = resultBox.textContent.replace(/\s/g, '');
+    
+    // Pick a random bin
+    const binRectangles = document.querySelectorAll('.bin-rectangle');
+    const randomBinIndex = Math.floor(Math.random() * binRectangles.length);
+    const selectedBin = binRectangles[randomBinIndex];
+    const binRect = selectedBin.getBoundingClientRect();
+    
+    // Get lid elements
+    const leftLid = selectedBin.querySelector('.bin-lid.left');
+    const rightLid = selectedBin.querySelector('.bin-lid.right');
+    
+    // Highlight the selected bin
+    selectedBin.style.borderColor = '#5DE4C7';
+    selectedBin.style.color = '#5DE4C7';
+    
+    // Create individual flying digits (not grouped)
+    const flyingDigits = [];
+    const digitElements = resultBox.querySelectorAll('.digit');
+    
+    // Hide the result box content gradually
+    digitElements.forEach((digit, i) => {
+        setTimeout(() => {
+            digit.style.opacity = '0';
+        }, i * 100);
+    });
+    
+    // Create flying digits - one for each character
+    for (let i = 0; i < resultDigits.length; i++) {
+        // Get position of the original digit
+        const digitRect = digitElements[i].getBoundingClientRect();
+        
+        // Create flying digit element
+        const flyingDigit = document.createElement('div');
+        flyingDigit.className = 'flying-digit';
+        flyingDigit.textContent = resultDigits[i];
+        flyingDigit.style.fontSize = '24px';
+        flyingDigit.style.left = digitRect.left + 'px';
+        flyingDigit.style.top = digitRect.top + 'px';
+        flyingDigit.style.opacity = '1';
+        flyingDigit.style.transition = 'all 1.2s cubic-bezier(0.25, 0.1, 0.25, 1.4)';
+        flyingDigit.style.transitionDelay = (i * 150) + 'ms';
+        flyingDigit.style.animation = 'wobble 0.6s ease-in-out infinite';
+        flyingDigit.style.animationDelay = (i * 0.1) + 's';
+        document.body.appendChild(flyingDigit);
+        flyingDigits.push(flyingDigit);
+    }
+    
+    // After a brief pause, start moving digits one by one
+    setTimeout(() => {
+        // Open the bin lids before digits arrive
+        leftLid.classList.add('open');
+        rightLid.classList.add('open');
+        
+        // Calculate destination position - center of the bin
+        const destinationX = binRect.left + (binRect.width / 2);
+        const destinationY = binRect.top + (binRect.height / 2);
+        
+        // Move each digit to bin with sequential timing
+        flyingDigits.forEach((digit, i) => {
+            // Add slight offset so they don't all stack exactly
+            const offsetX = Math.sin(i * 1.5) * 5; 
+            const offsetY = Math.cos(i * 1.5) * 2;
+            
+            // Move the digit
+            digit.style.left = (destinationX + offsetX - 8) + 'px';
+            digit.style.top = (destinationY + offsetY - 12) + 'px';
+            
+            // Flash the bin when each digit arrives
+            setTimeout(() => {
+                selectedBin.style.backgroundColor = 'rgba(36, 228, 242, 0.15)';
+                setTimeout(() => {
+                    selectedBin.style.backgroundColor = 'transparent';
+                }, 150);
+                
+                // Remove the digit after it arrives
+                setTimeout(() => {
+                    digit.style.opacity = '0';
+                    setTimeout(() => digit.remove(), 300);
+                }, 100);
+            }, 1200 + (i * 150)); // Match transition time + delay
+        });
+        
+        // After all digits have arrived
+        const totalTime = 1200 + (resultDigits.length * 150) + 500;
+        setTimeout(() => {
+            // Close the bin lids
+            leftLid.classList.remove('open');
+            rightLid.classList.remove('open');
+            
+            // Update the specific progress bar for this bin
+            updateProgressBar(randomBinIndex);
+            
+            // Show the result box again (empty)
+            resultBox.innerHTML = '';
+            resultBox.style.opacity = '1';
+            
+            // Reset the selected bin
+            setTimeout(() => {
+                selectedBin.style.borderColor = '#24e4f2';
+                selectedBin.style.color = '#24e4f2';
+                
+                // Restore cells
+                selectedDigits.forEach(cell => {
+                    cell.style.visibility = 'visible';
+                });
+                
+                // Resume random highlighting
+                isAnimating = false;
+                highlightInterval = setInterval(highlightRandomCells, 1000);
+            }, 500);
+        }, totalTime);
+    }, 300);
+}
+
+    createGrid();
+    highlightInterval = setInterval(highlightRandomCells, 1000); // Update highlights every second
+</script>
+
+</body>
+</html>
